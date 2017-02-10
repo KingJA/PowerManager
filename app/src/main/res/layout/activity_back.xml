@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="true"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    android:background="@color/bg_light">
+
+    <RelativeLayout
+        android:id="@+id/rl_top_root"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:background="@color/bg_white">
+
+        <RelativeLayout
+            android:id="@+id/rl_top_back"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentLeft="true"
+            android:background="@drawable/sel_tr2half_kj">
+
+            <ImageView
+                android:id="@+id/iv_top_back"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/back" />
+        </RelativeLayout>
+        <com.kingja.ui.SwitchMultiButton
+            android:visibility="gone"
+            android:layout_centerInParent="true"
+            android:id="@+id/sb_swtich"
+            app:selectedColor="@color/bg_blue"
+            app:strokeRadius="4dp"
+            app:strokeWidth="1dp"
+            android:layout_width="120dp"
+            android:layout_height="26dp" />
+
+
+
+        <RelativeLayout
+
+            android:visibility="gone"
+            android:id="@+id/rl_top_menu"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/sel_tr2half_kj">
+
+            <ImageView
+                android:id="@+id/iv_top_menu"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_centerInParent="true"
+               />
+        </RelativeLayout>
+
+        <RelativeLayout
+           android:visibility="gone"
+            android:id="@+id/rl_top_right"
+            android:layout_width="wrap_content"
+            android:layout_height="45dp"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/sel_tr2half_kj"
+           >
+
+            <TextView
+                android:layout_marginRight="12dp"
+                android:text=""
+                style="@style/font_0_15"
+                android:id="@+id/tv_top_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tv_top_title"
+            style="@style/font_0_18"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+           />
+    </RelativeLayout>
+
+    <View
+        style="@style/divider_nomal_horizontal"/>
+
+    <FrameLayout
+        android:id="@+id/fl_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>
