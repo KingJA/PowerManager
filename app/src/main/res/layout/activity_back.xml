@@ -28,15 +28,6 @@
                 android:layout_centerInParent="true"
                 android:background="@drawable/back" />
         </RelativeLayout>
-        <com.kingja.ui.SwitchMultiButton
-            android:visibility="gone"
-            android:layout_centerInParent="true"
-            android:id="@+id/sb_swtich"
-            app:selectedColor="@color/bg_blue"
-            app:strokeRadius="4dp"
-            app:strokeWidth="1dp"
-            android:layout_width="120dp"
-            android:layout_height="26dp" />
 
 
 

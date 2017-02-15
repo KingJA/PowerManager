@@ -96,6 +96,11 @@
         <item name="android:textColor">@color/font_6</item>
         <item name="android:singleLine">true</item>
     </style>
+ <style name="font_6_15">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/font_6</item>
+        <item name="android:singleLine">true</item>
+    </style>
 
     <style name="font_f_15">
         <item name="android:textSize">15sp</item>
@@ -114,5 +119,27 @@
         <item name="android:textColor">@color/bg_red</item>
         <item name="android:singleLine">true</item>
     </style>
+    <style name="font_blue_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/bg_blue</item>
+    </style>
+   <style name="font_blue_15">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/bg_blue</item>
+    </style>
 
+    <style name="btn_nomal_blue">
+        <item name="android:background">@drawable/sel_btn_blue</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/bg_white</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginRight">24dp</item>
+        <item name="android:layout_marginLeft">24dp</item>
+        <item name="android:gravity">center</item>
+    </style>
 </resources>

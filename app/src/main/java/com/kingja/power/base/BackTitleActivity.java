@@ -45,6 +45,7 @@ public abstract class BackTitleActivity extends BaseActivity implements View.OnC
         mFlContent = (FrameLayout) findViewById(R.id.fl_content);
         mIvTop_menu = (ImageView) findViewById(R.id.iv_top_menu);
 
+        mTvTopTitle.setText(setTitle()==null?"":setTitle());
         mRlTopBack.setOnClickListener(this);
         mRlTopMenu.setOnClickListener(this);
         mRlTopRight.setOnClickListener(new NoDoubleClickListener() {
@@ -65,7 +66,8 @@ public abstract class BackTitleActivity extends BaseActivity implements View.OnC
 
     }
 
-    protected abstract void initContentView();
+    protected abstract String setTitle();
+
 
 
     /**
@@ -141,6 +143,9 @@ public abstract class BackTitleActivity extends BaseActivity implements View.OnC
     /**
      * 初始化网络访问
      */
+
+    protected abstract void initContentView();
+
     @Override
     protected abstract void initNet();
 
