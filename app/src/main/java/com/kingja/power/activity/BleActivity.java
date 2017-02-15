@@ -196,7 +196,7 @@ public class BleActivity extends BackTitleActivity {
                     mBleService.scanLeDevice(true);
                 }
             }
-        }, R.drawable.bluetooth);
+        }, R.drawable.scan);
     }
 
 

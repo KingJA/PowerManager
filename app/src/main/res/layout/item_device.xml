@@ -9,11 +9,11 @@
 
     <ImageView
         android:id="@+id/imgv_logo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
-        android:src="@drawable/ic_bluetooth_black_36dp" />
+        android:src="@drawable/bluetooth" />
 
     <TextView
         android:id="@+id/txtv_name"
@@ -23,18 +23,21 @@
         android:layout_marginLeft="8dp"
         android:layout_toRightOf="@id/imgv_logo"
         android:text="Ble name"
-        android:textSize="16sp" />
+       style="@style/font_3_15" />
 
     <TextView
+        android:layout_marginTop="4dp"
+        style="@style/font_9_15"
         android:id="@+id/txtv_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@id/txtv_name"
         android:layout_below="@id/txtv_name"
         android:text="00:00:00:00:00:00"
-        android:textSize="12sp" />
+         />
 
     <TextView
+        style="@style/font_9_12"
         android:id="@+id/txtv_connState"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -42,10 +45,10 @@
         android:layout_alignParentBottom="true"
         android:layout_below="@id/txtv_address"
         android:layout_marginTop="4dp"
-        android:text="状态: 未连接"
-        android:textSize="12sp" />
+        android:text="状态: 未连接" />
 
-    <Button
+    <TextView
+        style="@style/font_blue_15"
         android:id="@+id/btn_connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

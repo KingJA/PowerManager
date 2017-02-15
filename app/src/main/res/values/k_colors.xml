@@ -2,7 +2,7 @@
 <resources>
     <!-- KingJA -->
     <color name="bg_red">#ff563f</color>
-    <color name="bg_gray">#cacaca</color>
+    <color name="bg_gray">#eeeeee</color>
     <color name="bg_blue">#4285f4</color>
     <color name="bg_blue_press">#2c6fdf</color>
     <color name="bg_white">#FFFFFF</color>
