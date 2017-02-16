@@ -1,1 +1,1 @@
-include ':app', ':zbar', ':blelib'
+include ':app', ':zbar', ':blelib', ':libk-progress'

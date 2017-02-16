@@ -1,5 +1,6 @@
 package com.kingja.power.activity;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
@@ -13,9 +14,13 @@ import com.junkchen.blelib.BleListener;
 import com.junkchen.blelib.BleService;
 import com.kingja.power.R;
 import com.kingja.power.base.BackTitleActivity;
-import com.kingja.power.base.BaseApplication;
+import com.kingja.power.base.App;
+import com.kingja.power.dao.DBManager;
+import com.kingja.power.greenbean.Battery;
 import com.kingja.power.util.ByteUtil;
+import com.kingja.power.util.DataManager;
 import com.kingja.power.util.GoUtil;
+import com.kingja.power.util.TimeUtil;
 
 /**
  * Description：蓄电池绑定
@@ -25,13 +30,13 @@ import com.kingja.power.util.GoUtil;
  */
 public class PowerBindActivity extends BackTitleActivity {
 
-    private String deviceId;
+    private String data;
     private TextView tv_confirm;
     private BleService mBleService;
 
     @Override
     protected void initVariables() {
-        deviceId = getIntent().getStringExtra("DeviceId");
+        data = getIntent().getStringExtra("data");
         mBleService = BleService.getInstance();
 
     }
@@ -61,16 +66,12 @@ public class PowerBindActivity extends BackTitleActivity {
         tv_confirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String sendContent = "aa0b" + deviceId + "000000000000000000000000";
-//                mBleService.writeCharacteristic(BaseApplication.service_uuid,BaseApplication.write_uuid, ByteUtil.hexStrToByte(sendContent));
-                //握手0x0b
-                mBleService.writeCharacteristic(BaseApplication.service_uuid, BaseApplication.write_uuid,
-                        new byte[]{(byte) 0xaa, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, (byte) 0xC3});
+                saveData2Local(data);
                 //下发电池信息0x0c
-                mBleService.writeCharacteristic(BaseApplication.service_uuid, BaseApplication.write_uuid,
+                mBleService.writeCharacteristic(DataManager.getServiceUUID(),DataManager.getWriteUUID(),
                         new byte[]{(byte) 0xaa, 0x0c, 0x01, 0x01, 0x01, 0x01, 0x01, 0x33, (byte) 0xc9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x57, 0x76});
 
-                GoUtil.goActivity(PowerBindActivity.this,PowerDisplayActivity.class);
+                PowerDisplayActivity.goActivity(PowerBindActivity.this,"");
             }
 
 
@@ -94,15 +95,29 @@ public class PowerBindActivity extends BackTitleActivity {
             }
         });
     }
+//设备类型2 设备ID 4 设备生产时间4 设备生产区编码1 预留4
+    //0001 000003a8  0133c902         02         00000000
+    // 1     936      20171010         2           0
+    private void saveData2Local(String data) {
+        String deviceType=ByteUtil.hexStr2Dec(data.substring(0,4))+"";
+        String deviceId=ByteUtil.hexStr2Dec(data.substring(4,12))+"";
+        String deviceProduceTime=ByteUtil.hexStr2Dec(data.substring(12,20))+"";
+        String deviceProdueterNO=ByteUtil.hexStr2Dec(data.substring(20,22))+"";
+        Log.e(TAG, "deviceType: "+deviceType );
+        Log.e(TAG, "deviceId: "+deviceId );
+        Log.e(TAG, "deviceProduceTime: "+deviceProduceTime );
+        Log.e(TAG, "deviceProdueterNO: "+deviceProdueterNO );
+        DBManager.getInstance(this).insertBattery(new Battery(null, DataManager.getMacAddress(),deviceType,deviceId,deviceProduceTime,deviceProdueterNO, TimeUtil.getYearDay()));
+    }
 
     @Override
     protected void setData() {
     }
 
-    public static void goActivity(Context context, String deviceId) {
-        Intent intent = new Intent(context, PowerBindActivity.class);
-        intent.putExtra("DeviceId", deviceId);
-        context.startActivity(intent);
-
+    public static void goActivity(Activity activity, String data) {
+        Intent intent = new Intent(activity, PowerBindActivity.class);
+        intent.putExtra("data", data);
+        activity.startActivity(intent);
+        activity.finish();
     }
 }

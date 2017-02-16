@@ -9,13 +9,11 @@ import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -24,31 +22,32 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.flyco.dialog.listener.OnBtnClickL;
 import com.flyco.dialog.widget.NormalDialog;
+import com.junkchen.blelib.BleListener;
 import com.junkchen.blelib.BleService;
 import com.kingja.power.R;
 import com.kingja.power.base.BackTitleActivity;
-import com.kingja.power.base.BaseApplication;
+import com.kingja.power.base.App;
 import com.kingja.power.dao.DBManager;
 import com.kingja.power.greenbean.BleInfo;
 import com.kingja.power.util.ByteUtil;
+import com.kingja.power.util.DataManager;
 import com.kingja.power.util.DialogUtil;
 import com.kingja.power.util.GoUtil;
-import com.kingja.power.util.ToastUtil;
 import com.kingja.zbar.CaptureActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.security.auth.login.LoginException;
 
 /**
  * Description：蓝牙搜索
@@ -74,6 +73,7 @@ public class BleActivity extends BackTitleActivity {
     private List<Map<String, Object>> deviceList;
     private String connDeviceName;
     private String connDeviceAddress;
+    private boolean hasBinded;
 
     //Layout view
     private ListView lstv_devList;
@@ -93,6 +93,7 @@ public class BleActivity extends BackTitleActivity {
             } else {
                 Toast.makeText(BleActivity.this, "not support Bluetooth", Toast.LENGTH_SHORT).show();
             }
+            mIsBind = true;
         }
 
         @Override
@@ -122,8 +123,6 @@ public class BleActivity extends BackTitleActivity {
 
     @Override
     protected void initVariables() {
-        BleInfo lastBleInfo = DBManager.getInstance(this).getLastBleInfo("01");
-        Log.e(TAG, "lastBleInfo: "+lastBleInfo.getContent() );
     }
 
     @Override
@@ -161,29 +160,7 @@ public class BleActivity extends BackTitleActivity {
         });
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && data != null) {
-            String result = data.getStringExtra("result");
-            final String deviceId = result.substring(4, 12);
-            Log.e(TAG, "deviceId: " + deviceId);
-            bindDialog = DialogUtil.getDoubleDialog(this, "您是否要绑定编号为" + ByteUtil.hexStr2Dec(deviceId) + "的设备", "取消", "确定");
-            bindDialog.setOnBtnClickL(new OnBtnClickL() {
-                @Override
-                public void onBtnClick() {
-                    bindDialog.dismiss();
-                }
-            }, new OnBtnClickL() {
-                @Override
-                public void onBtnClick() {
-                    bindDialog.dismiss();
-                    PowerBindActivity.goActivity(BleActivity.this, deviceId);
-                }
-            });
-            bindDialog.show();
-        }
-    }
+
 
     @Override
     protected void setData() {
@@ -272,19 +249,27 @@ public class BleActivity extends BackTitleActivity {
                         if ((boolean) deviceMap.get("isConnect")) {
                             mBleService.disconnect();
                             showDialog(getString(R.string.disconnecting));
+                            tv_scan_code.setVisibility(View.GONE);
                         } else {
                             connDeviceAddress = (String) deviceMap.get("address");
                             connDeviceName = (String) name;
-                            HashMap<String, Object> connDevMap = new HashMap<String, Object>();
-                            connDevMap.put("name", connDeviceName);
-                            connDevMap.put("address", connDeviceAddress);
-                            connDevMap.put("isConnect", false);
-                            deviceList.clear();
-                            deviceList.add(connDevMap);
-                            deviceAdapter.notifyDataSetChanged();
-                            mBleService.connect(connDeviceAddress);
-                            showDialog(getString(R.string.connecting));
-                            tv_scan_code.setVisibility(View.VISIBLE);
+                            if (hasBinded = DBManager.getInstance(BleActivity.this).getBindedBattery(connDeviceAddress).size() > 0) {
+                                mBleService.connect(connDeviceAddress);
+                                showDialog(getString(R.string.connecting));
+//TODO
+                            } else {
+                                HashMap<String, Object> connDevMap = new HashMap<String, Object>();
+                                connDevMap.put("name", connDeviceName);
+                                connDevMap.put("address", connDeviceAddress);
+                                connDevMap.put("isConnect", false);
+                                deviceList.clear();
+                                deviceList.add(connDevMap);
+                                deviceAdapter.notifyDataSetChanged();
+                                mBleService.connect(connDeviceAddress);
+                                DataManager.putMacAddress(connDeviceAddress);
+                                showDialog(getString(R.string.connecting));
+                                tv_scan_code.setVisibility(View.VISIBLE);
+                            }
                         }
                     }
                 });
@@ -316,119 +301,41 @@ public class BleActivity extends BackTitleActivity {
                 }
             }
         });
-//        //Ble扫描回调
-//        mBleService.setOnLeScanListener(new BleService.OnLeScanListener() {
-//            @Override
-//            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-//                //每当扫描到一个Ble设备时就会返回，（扫描结果重复的库中已处理）
-//            }
-//        });
-//        //Ble连接回调
-//        mBleService.setOnConnectListener(new BleService.OnConnectListener() {
-//            @Override
-//            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-//                if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-//                    //Ble连接已断开
-//                } else if (newState == BluetoothProfile.STATE_CONNECTING) {
-//                    //Ble正在连接
-//                } else if (newState == BluetoothProfile.STATE_CONNECTED) {
-//                    //Ble已连接
-//                } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
-//                    //Ble正在断开连接
-//                }
-//            }
-//        });
-//        //Ble服务发现回调
-//        mBleService.setOnServicesDiscoveredListener(new BleService.OnServicesDiscoveredListener() {
-//            @Override
-//            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-//
-//            }
-//        });
-//        //Ble数据回调
-//        mBleService.setOnDataAvailableListener(new BleService.OnDataAvailableListener() {
-//            @Override
-//            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-//                //处理特性读取返回的数据
-//            }
-//
-//            @Override
-//            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-//                //处理通知返回的数据
-//            }
-//        @Override
-//        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-//
-//        }
-//        });
-        mBleService.setOnReadRemoteRssiListener(new BleService.OnReadRemoteRssiListener() {
-            @Override
-            public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-                Log.i(TAG, "onReadRemoteRssi: rssi = " + rssi);
-            }
-        });
     }
 
     private void getReadAndWriteUUID(BluetoothGattService service) {
         String serviceUuid = service.getUuid().toString();
         if (SERVICE_UUID.equals(serviceUuid)) {
             final List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
-            Log.e(TAG, "onClick: " + characteristics.get(3).getUuid());
             mBleService.setCharacteristicNotification(characteristics.get(3), true);
-            mBleService.setOnDataAvailableListener(new BleService.OnDataAvailableListener() {
-                @Override
-                public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                    byte[] value = characteristic.getValue();
-                    Log.e(TAG, "onCharacteristicRead: " + byte2hex(value));
-                }
-
-                @Override
-                public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                    byte[] value = characteristic.getValue();
-                    Log.e(TAG, "onCharacteristicChanged: " + byte2hex(value));
-                }
-
-                @Override
-                public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                    Log.e(TAG, "onDescriptorRead: ");
-                }
-            });
-//            findViewById(R.id.btn_read).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    mBleService.readCharacteristic(characteristics.get(3));
-//                }
-//            });
-//            findViewById(R.id.btn_send).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    mBleService.writeCharacteristic(characteristics.get(2), new byte[]{(byte) 0xaa, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, (byte) 0xC3});
-//                    mBleService.readCharacteristic(characteristics.get(3));
-//                }
-//            });
-
-
             writeUUID = characteristics.get(2).getUuid().toString();
             readUUID = characteristics.get(3).getUuid().toString();
-            BaseApplication.write_uuid=writeUUID;
-            BaseApplication.read_uuid=readUUID;
-            Log.e(TAG, "writeUUID: " + writeUUID);
-            Log.e(TAG, "readUUID: " + readUUID);
+            DataManager.putServiceUUID(SERVICE_UUID);
+            DataManager.putReadUUID(readUUID);
+            DataManager.putWriteUUID(writeUUID);
         }
     }
-
-    private void doOperation() {
-//        mBleService.initialize();//Ble初始化操作
-//        mBleService.enableBluetooth(boolean enable);//打开或关闭蓝牙
-//        mBleService.scanLeDevice(boolean enable, long scanPeriod);//启动或停止扫描Ble设备
-//        mBleService.connect(String address);//连接Ble
-//        mBleService.disconnect();//取消连接
-//        mBleService.getSupportedGattServices();//获取服务
-//        mBleService.setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
-//        boolean enabled);//设置通知
-//        mBleService.readCharacteristic(BluetoothGattCharacteristic characteristic);//读取数据
-//        mBleService.writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value);//写入数据
-//        mBleService.close();//关闭客户端
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && data != null) {
+            final String result = data.getStringExtra("result");
+             String deviceId = result.substring(4, 12);
+            bindDialog = DialogUtil.getDoubleDialog(this, "您是否要绑定编号为" + ByteUtil.hexStr2Dec(deviceId) + "的设备", "取消", "确定");
+            bindDialog.setOnBtnClickL(new OnBtnClickL() {
+                @Override
+                public void onBtnClick() {
+                    bindDialog.dismiss();
+                }
+            }, new OnBtnClickL() {
+                @Override
+                public void onBtnClick() {
+                    bindDialog.dismiss();
+                    PowerBindActivity.goActivity(BleActivity.this, result);
+                }
+            });
+            bindDialog.show();
+        }
     }
 
     /**
@@ -444,6 +351,7 @@ public class BleActivity extends BackTitleActivity {
      */
     private void doUnBindService() {
         if (mIsBind) {
+            Log.e(TAG, "doUnBindService: " );
             unbindService(serviceConnection);
             mBleService = null;
             mIsBind = false;
@@ -464,12 +372,16 @@ public class BleActivity extends BackTitleActivity {
                 deviceList.add(deviceMap);
                 deviceAdapter.notifyDataSetChanged();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_CONNECTED)) {
-                Log.e(TAG, "ACTION_GATT_CONNECTED: " );
+                Log.e(TAG, "ACTION_GATT_CONNECTED: ");
                 deviceList.get(0).put("isConnect", true);
                 deviceAdapter.notifyDataSetChanged();
                 dismissDialog();
+                if (hasBinded) {
+                    PowerDisplayActivity.goActivity(BleActivity.this,"00000001");
+                }
+
             } else if (intent.getAction().equals(BleService.ACTION_GATT_DISCONNECTED)) {
-                Log.e(TAG, "ACTION_GATT_DISCONNECTED: " );
+                Log.e(TAG, "ACTION_GATT_DISCONNECTED: ");
                 deviceList.get(0).put("isConnect", false);
                 serviceList.clear();
                 characteristicList.clear();
@@ -482,18 +394,6 @@ public class BleActivity extends BackTitleActivity {
             }
         }
     };
-
-    public static String byte2hex(byte[] buffer) {
-        String h = "";
-        for (int i = 0; i < buffer.length; i++) {
-            String temp = Integer.toHexString(buffer[i] & 0xFF);
-            if (temp.length() == 1) {
-                temp = "0" + temp;
-            }
-            h = h + temp;
-        }
-        return h;
-    }
 
     private static IntentFilter makeIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();

@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/PowerManager.iml" filepath="$PROJECT_DIR$/PowerManager.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/blelib/blelib.iml" filepath="$PROJECT_DIR$/blelib/blelib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libk-progress/libk-progress.iml" filepath="$PROJECT_DIR$/libk-progress/libk-progress.iml" />
       <module fileurl="file://$PROJECT_DIR$/zbar/zbar.iml" filepath="$PROJECT_DIR$/zbar/zbar.iml" />
     </modules>
   </component>

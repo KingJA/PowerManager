@@ -2,7 +2,7 @@ package com.kingja.power.util;
 
 import android.widget.Toast;
 
-import com.kingja.power.base.BaseApplication;
+import com.kingja.power.base.App;
 
 /**
  * Description：TODO
@@ -15,7 +15,7 @@ public class ToastUtil {
 
     public static void showToast(String msg) {
         if (mToast == null) {
-            mToast = Toast.makeText(BaseApplication.getContext(), "", Toast.LENGTH_LONG);
+            mToast = Toast.makeText(App.getContext(), "", Toast.LENGTH_LONG);
         }
         mToast.setText(msg);
         mToast.show();

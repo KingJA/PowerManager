@@ -4,10 +4,10 @@ package com.kingja.power.dao;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.kingja.power.greenbean.Battery;
 import com.kingja.power.greenbean.BleInfo;
 
-import org.greenrobot.greendao.query.QueryBuilder;
-
+import java.util.ArrayList;
 import java.util.List;
 
 public class DBManager {
@@ -68,14 +68,30 @@ public class DBManager {
         return daoSession.getBleInfoDao();
     }
 
+    private BatteryDao getBatteryDao() {
+        DaoMaster daoMaster = new DaoMaster(db);
+        DaoSession daoSession = daoMaster.newSession();
+        return daoSession.getBatteryDao();
+    }
+
     /**
-     * 插入一条记录
+     * 插入蓝牙记录
      *
      * @param bleInfo
      */
     public void insertBleInfo(BleInfo bleInfo) {
         BleInfoDao bleInfoDao = getBleInfoDao();
         bleInfoDao.insert(bleInfo);
+    }
+
+    /**
+     * 插入电池信息
+     *
+     * @param battery
+     */
+    public void insertBattery(Battery battery) {
+        BatteryDao bleInfoDao = getBatteryDao();
+        bleInfoDao.insert(battery);
     }
 
 
@@ -85,9 +101,24 @@ public class DBManager {
      * @return
      */
     public BleInfo getLastBleInfo(String order) {
+        BleInfo bleInfo = new BleInfo();
         BleInfoDao bleInfoDao = getBleInfoDao();
         List<BleInfo> list = bleInfoDao.queryBuilder().where(BleInfoDao.Properties.Order.eq(order)).orderDesc(BleInfoDao.Properties.Id).limit(1).list();
-        return list.get(0);
+        if (list.size() > 0) {
+            bleInfo = list.get(0);
+        }
+        return bleInfo;
+    }
+
+    /**
+     * 获取绑定指定MAC的设备
+     *
+     * @return
+     */
+    public List<Battery> getBindedBatteries(String mac) {
+        BatteryDao batteryDao = getBatteryDao();
+        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(mac)).orderAsc(BatteryDao.Properties.DeviceType).list();
+        return list;
     }
 
     /**
@@ -96,6 +127,23 @@ public class DBManager {
     public void deleteAllBleInfo() {
         BleInfoDao bleInfoDao = getBleInfoDao();
         bleInfoDao.deleteAll();
+    }
+
+    public List<Battery> getBindedBattery(String macAddress) {
+        BatteryDao batteryDao = getBatteryDao();
+        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(macAddress)).list();
+        return list;
+    }
+
+    public boolean hasBinded(String deviceId) {
+        BatteryDao batteryDao = getBatteryDao();
+        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.DeviceId.eq(deviceId)).list();
+        return list.size() > 0;
+    }
+
+    public void deleteBattery(long id) {
+        BatteryDao batteryDao = getBatteryDao();
+        batteryDao.deleteByKey(id);
     }
 
 }

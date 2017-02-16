@@ -1,20 +1,45 @@
 package com.kingja.power.activity;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothProfile;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.flyco.dialog.listener.OnBtnClickL;
+import com.flyco.dialog.widget.NormalDialog;
 import com.junkchen.blelib.BleListener;
 import com.junkchen.blelib.BleService;
 import com.kingja.power.R;
+import com.kingja.power.adapter.BatteryAdapter;
 import com.kingja.power.base.BackTitleActivity;
-import com.kingja.power.util.ByteUtil;
-import com.kingja.power.util.GoUtil;
 import com.kingja.power.convert.HeartConvert;
+import com.kingja.power.dao.DBManager;
+import com.kingja.power.greenbean.Battery;
+import com.kingja.power.util.ByteUtil;
+import com.kingja.power.util.DataManager;
+import com.kingja.power.util.DialogUtil;
+import com.kingja.power.util.GoUtil;
+import com.kingja.power.util.TimeUtil;
+import com.kingja.power.util.ToastUtil;
+import com.kingja.zbar.CaptureActivity;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lib.kingja.progress.KJProgressRound;
 
 /**
  * Description：蓄电池显示
@@ -22,11 +47,10 @@ import com.kingja.power.convert.HeartConvert;
  * Author:KingJA
  * Email:kingjavip@gmail.com
  */
-public class PowerDisplayActivity extends BackTitleActivity implements BleListener.OnDataAvailableListener{
+public class PowerDisplayActivity extends BackTitleActivity implements BleListener.OnDataAvailableListener {
 
     private BleService mBleService;
 
-    private TextView mTvPower;
     private TextView mTvKilometre;
     private TextView mTvVoltage;
     private TextView mTvTemperature;
@@ -35,18 +59,77 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
     private TextView mTvChargerStatus;
     private TextView mTvHealthStatus;
     private TextView mTvLastChargeTime;
+    private KJProgressRound mProgressCircle;
+    private String deviceId;
+    public static final int SERVICE_BIND = 1;
+    private final int SCAN_CODE = 0X110;
+    private boolean mIsBind;
+    private List<Battery> mBatteryList = new ArrayList<>();
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBleService = ((BleService.LocalBinder) service).getService();
+            if (mBleService != null) {
+                mHandler.sendEmptyMessage(SERVICE_BIND);
+            }
+            mBleService.initialize();
+            mIsBind = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBleService = null;
+            mIsBind = false;
+        }
+    };
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case SERVICE_BIND:
+                    mBleService.setOnDataAvailableListener(PowerDisplayActivity.this);
+                    mBleService.setOnConnectListener(new BleListener.OnConnectionStateChangeListener() {
+                        @Override
+                        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                            if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                                Log.e(TAG, "服务断开: " + (mBleService == null));
+                                doBindService();
+                            } else if (newState == BluetoothProfile.STATE_CONNECTING) {
+                                //Ble正在连接
+                            } else if (newState == BluetoothProfile.STATE_CONNECTED) {
+                                //Ble已连接
+                            } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
+                                //Ble正在断开连接
+                            }
+                        }
+                    });
+                    mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(),
+                            new byte[]{(byte) 0xaa, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, (byte) 0xC3});
+                    break;
+            }
+        }
+    };
+    private TextView mTvAddBattery;
+    private NormalDialog bindDialog;
+    private BatteryAdapter mBatteryAdapter;
+    private NormalDialog unbindDialog;
+    private String dateHex;
 
 
     @Override
     protected void onResume() {
         super.onResume();
-        mBleService.setOnDataAvailableListener(this);
+        if (mBleService != null) {
+            mBleService.setOnDataAvailableListener(this);
+        }
     }
 
     @Override
     protected void initVariables() {
-        Log.e(TAG, "PowerDisplayActivity: " );
-        mBleService = BleService.getInstance();
+        doBindService();
+        deviceId = getIntent().getStringExtra("deviceId");
+        mBatteryList = DBManager.getInstance(this).getBindedBatteries(DataManager.getMacAddress());
+        Log.e(TAG, "deviceId: " + deviceId);
     }
 
     @Override
@@ -56,7 +139,6 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
 
     @Override
     protected void initContentView() {
-        mTvPower = (TextView) findViewById(R.id.tv_power);
         mTvKilometre = (TextView) findViewById(R.id.tv_kilometre);
         mTvVoltage = (TextView) findViewById(R.id.tv_voltage);
         mTvTemperature = (TextView) findViewById(R.id.tv_temperature);
@@ -65,6 +147,10 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
         mTvChargerStatus = (TextView) findViewById(R.id.tv_charger_status);
         mTvHealthStatus = (TextView) findViewById(R.id.tv_health_status);
         mTvLastChargeTime = (TextView) findViewById(R.id.tv_last_charge_time);
+        mProgressCircle = (KJProgressRound) findViewById(R.id.progress_circle);
+        mTvAddBattery = (TextView) findViewById(R.id.tv_add_battery);
+        mBatteryAdapter = new BatteryAdapter(this, mBatteryList);
+        mLv.setAdapter(mBatteryAdapter);
     }
 
     @Override
@@ -79,17 +165,60 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
 
     @Override
     protected void initData() {
-        mTvLifecycle.setOnClickListener(new View.OnClickListener() {
+        setBackButtonGone();
+        mTvAddBattery.setOnClickListener(this);
+        mTvLifecycle.setOnClickListener(this);
+        mLv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public void onClick(View v) {
-                GoUtil.goActivity(PowerDisplayActivity.this,PowerLifecycleActivity.class);
+            public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
+
+                unbindDialog = DialogUtil.getDoubleDialog(PowerDisplayActivity.this, "您是否要解绑编号为" + ByteUtil.hexStr2Dec(deviceId) + "的子电池", "取消", "确定");
+                unbindDialog.setOnBtnClickL(new OnBtnClickL() {
+                    @Override
+                    public void onBtnClick() {
+                        unbindDialog.dismiss();
+                    }
+                }, new OnBtnClickL() {
+                    @Override
+                    public void onBtnClick() {
+                        unbindDialog.dismiss();
+                        Battery battery = (Battery) parent.getItemAtPosition(position);
+                        DBManager.getInstance(PowerDisplayActivity.this).deleteBattery(battery.getId());
+                        mBatteryList = DBManager.getInstance(PowerDisplayActivity.this).getBindedBatteries(DataManager.getMacAddress());
+                        mBatteryAdapter.setData(mBatteryList);
+                    }
+                });
+                unbindDialog.show();
+                return true;
             }
         });
-
+        mLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Battery battery = (Battery) parent.getItemAtPosition(position);
+                PowerChildDisplayActivity.goActivity(PowerDisplayActivity.this,HeartConvert.getPowerStatus(dateHex),"--",HeartConvert.getTemperature(dateHex) + "℃",
+                        battery.getDeviceId(),battery.getProduceTime(),battery.getCreateTime());
+            }
+        });
     }
-//    运动状态（1Byte）+电池组状态(1Byte) +电压(6Byte)+平均温度(1Byte)+未充电放置天数（1Byte）+连续未充电满次数(1Byte)+本次充电时间（2Byte）+本次放电时间（2Byte）+续航公里数（1Byte）
+
+    @Override
+    public void onClick(View v) {
+        super.onClick(v);
+        switch (v.getId()) {
+            case R.id.tv_add_battery:
+                GoUtil.goActivityForResult(PowerDisplayActivity.this, CaptureActivity.class, SCAN_CODE);
+                break;
+            case R.id.tv_lifecycle:
+                GoUtil.goActivity(PowerDisplayActivity.this, PowerLifecycleActivity.class);
+                break;
+
+        }
+    }
+
+    //    运动状态（1Byte）+电池组状态(1Byte) +电压(6Byte)+平均温度(1Byte)+未充电放置天数（1Byte）+连续未充电满次数(1Byte)+本次充电时间（2Byte）+本次放电时间（2Byte）+续航公里数（1Byte）
     private String getOrderCode(String hexStr) {
-        return  hexStr.substring(2,4);
+        return hexStr.substring(2, 4);
     }
 
     @Override
@@ -107,14 +236,13 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
             @Override
             public void run() {
                 byte[] value = characteristic.getValue();
-                Log.e(TAG, "onCharacteristicChanged: " + ByteUtil.byte2hex(value));
-                String dateHex = ByteUtil.byte2hex(value).substring(4);
-
+                dateHex = ByteUtil.byte2hex(value).substring(4);
                 if ("01".equals(getOrderCode(ByteUtil.byte2hex(value)))) {
-                    mTvVoltage.setText(HeartConvert.getVoltage(dateHex)+"V");
-                    mTvKilometre.setText(HeartConvert.getKilometre(dateHex)+"公里");
-                    mTvTemperature.setText(HeartConvert.getTemperature(dateHex)+"℃");
+                    mTvVoltage.setText(HeartConvert.getVoltage(dateHex) + "V");
+                    mTvKilometre.setText(HeartConvert.getKilometre(dateHex) + "公里");
+                    mTvTemperature.setText(HeartConvert.getTemperature(dateHex) + "℃");
                     mTvChargerStatus.setText(HeartConvert.getPowerStatus(dateHex));
+//                    mProgressCircle.setProgress();
 //                            mTvHealthStatus.setText(HeartConvert.getMoveStatus(dateHex));
                 }
             }
@@ -124,5 +252,95 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
     @Override
     public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
 
+    }
+
+    /**
+     * 绑定服务
+     */
+    private void doBindService() {
+        Intent serviceIntent = new Intent(this, BleService.class);
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    /**
+     * 解绑服务
+     */
+    private void doUnBindService() {
+        if (mIsBind) {
+            unbindService(serviceConnection);
+            mBleService = null;
+            mIsBind = false;
+        }
+    }
+
+    public static void goActivity(Activity activity, String deviceId) {
+        Intent intent = new Intent(activity, PowerDisplayActivity.class);
+        intent.putExtra("deviceId", deviceId);
+        activity.startActivity(intent);
+        activity.finish();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && data != null) {
+            final String result = data.getStringExtra("result");
+            String deviceId = result.substring(4, 12);
+
+            if (DBManager.getInstance(PowerDisplayActivity.this).hasBinded(ByteUtil.hexStr2Dec(result.substring(4, 12)) + "")) { //TODO 1.如果已经绑定则提示已经绑定，如果没有则进行绑定
+                ToastUtil.showToast("该设备已经绑定");
+            }else{
+
+                bindDialog = DialogUtil.getDoubleDialog(this, "您是否要绑定编号为" + ByteUtil.hexStr2Dec(deviceId) + "的子电池", "取消", "确定");
+                bindDialog.setOnBtnClickL(new OnBtnClickL() {
+                    @Override
+                    public void onBtnClick() {
+                        bindDialog.dismiss();
+                    }
+                }, new OnBtnClickL() {
+                    @Override
+                    public void onBtnClick() {
+                        bindDialog.dismiss();
+                        saveData2Local(result);
+                        mBatteryList = DBManager.getInstance(PowerDisplayActivity.this).getBindedBatteries(DataManager.getMacAddress());
+                        mBatteryAdapter.setData(mBatteryList);
+
+                    }
+                });
+                bindDialog.show();
+
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        doUnBindService();
+    }
+
+    private void saveData2Local(String data) {
+        String deviceType = ByteUtil.hexStr2Dec(data.substring(0, 4)) + "";
+        String deviceId = ByteUtil.hexStr2Dec(data.substring(4, 12)) + "";
+        String deviceProduceTime = ByteUtil.hexStr2Dec(data.substring(12, 20)) + "";
+        String deviceProdueterNO = ByteUtil.hexStr2Dec(data.substring(20, 22)) + "";
+        Log.e(TAG, "deviceType: " + deviceType);
+        Log.e(TAG, "deviceId: " + deviceId);
+        Log.e(TAG, "deviceProduceTime: " + deviceProduceTime);
+        Log.e(TAG, "deviceProdueterNO: " + deviceProdueterNO);
+        DBManager.getInstance(this).insertBattery(new Battery(null, DataManager.getMacAddress(), deviceType, deviceId, deviceProduceTime, deviceProdueterNO, TimeUtil.getYearDay()));
+    }
+
+    private long lastTime;
+
+    @Override
+    public void onBackPressed() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastTime < 500) {
+            finish();
+        } else {
+            ToastUtil.showToast("连续点击两次退出");
+            lastTime = currentTime;
+        }
     }
 }

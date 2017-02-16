@@ -37,4 +37,5 @@ dependencies {
     compile 'org.greenrobot:greendao:3.0.1'
     compile project(':blelib')
     compile project(':zbar')
+    compile project(':libk-progress')
 }

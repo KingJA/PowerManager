@@ -68,7 +68,9 @@ public abstract class BackTitleActivity extends BaseActivity implements View.OnC
 
     protected abstract String setTitle();
 
-
+    public void setBackButtonGone() {
+        mRlTopBack.setVisibility(View.GONE);
+    }
 
     /**
      * 设置标题

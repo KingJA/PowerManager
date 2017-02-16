@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="KJProgress">
+        <attr name="progress" format="integer" />
+        <attr name="progressMax" format="integer" />
+        <attr name="reachWidth" format="dimension" />
+        <attr name="reachColor" format="color|reference" />
+        <attr name="unreachColor" format="color|reference" />
+        <attr name="unreachWidth" format="dimension" />
+        <attr name="progressTextSize" format="dimension" />
+        <attr name="progressTextColor" format="color|reference" />
+        <attr name="progressTextMargin" format="dimension" />
+        <attr name="radius" format="dimension" />
+        <attr name="scaleWidth" format="dimension" />
+        <attr name="scaleLength" format="dimension" />
+        <attr name="scaleNum" format="integer" />
+        <attr name="strokeCap">
+            <flag name="square" value="0" />
+            <flag name="round" value="1" />
+        </attr>
+
+        <attr name="progressStyle">
+            <flag name="stroke" value="0" />
+            <flag name="fill" value="1" />
+        </attr>
+        <attr name="scaleCap">
+            <flag name="square" value="0" />
+            <flag name="circle" value="1" />
+        </attr>
+    </declare-styleable>
+
+
+</resources>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -18,13 +19,32 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
-            <TextView
-                style="@style/font_blue_15"
-                android:id="@+id/tv_power"
-                android:layout_width="118dp"
-                android:layout_height="118dp"
-                android:gravity="center"
-                android:text="--%" />
+            <RelativeLayout
+                android:layout_marginTop="30dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <lib.kingja.progress.KJProgressRound
+                    android:id="@+id/progress_circle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:progress="0"
+                    app:progressMax="100"
+                    app:progressTextColor="#4285f4"
+                    app:progressTextSize="30sp"
+                    app:radius="50dp"
+                    app:reachColor="#4285f4"
+                    app:unreachColor="#d9e7fd"
+                    app:unreachWidth="4dp" />
+
+                <TextView
+                    style="@style/font_blue_12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:paddingTop="40dp"
+                    android:text="当前电量" />
+            </RelativeLayout>
 
             <TextView
                 android:id="@+id/tv_lifecycle"
@@ -125,14 +145,12 @@
             android:layout_marginTop="20dp"
             android:background="@color/bg_white"
             android:orientation="vertical"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp">
+>
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="12dp"
-                android:paddingTop="12dp">
+                android:padding="12dp">
 
                 <TextView
                     style="@style/font_6_15"
@@ -141,22 +159,24 @@
                     android:text="子电池管理" />
 
                 <TextView
-                    android:drawableLeft="@drawable/add_power"
+                    android:id="@+id/tv_add_battery"
                     style="@style/font_6_15"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentRight="true"
+                    android:drawableLeft="@drawable/add_power"
                     android:text="添加电池" />
             </RelativeLayout>
 
             <View style="@style/divider_nomal_horizontal" />
 
 
-            <ListView
-                android:divider="@color/bg_divider"
+            <com.kingja.power.view.FixedListView
+                android:dividerHeight="1px"
                 android:id="@+id/gv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:divider="#00000000"
                 android:numColumns="4"
                 tools:listitem="@layout/item_accumulator" />
 
@@ -164,13 +184,15 @@
                 style="@style/font_6_15"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="12dp"
-                android:paddingTop="12dp"
+                android:padding="12dp"
                 android:text="整组电池概况" />
-            <View style="@style/divider_nomal_horizontal"/>
+
+            <View style="@style/divider_nomal_horizontal" />
 
 
             <LinearLayout
+                android:paddingRight="12dp"
+                android:paddingLeft="12dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -193,6 +215,8 @@
 
 
             <LinearLayout
+                android:paddingRight="12dp"
+                android:paddingLeft="12dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -220,6 +244,8 @@
                 android:paddingTop="12dp">
 
                 <TextView
+                    android:paddingRight="12dp"
+                    android:paddingLeft="12dp"
                     style="@style/font_9_12"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
