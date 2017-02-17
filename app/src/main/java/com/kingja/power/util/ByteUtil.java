@@ -7,15 +7,16 @@ package com.kingja.power.util;
  * Email:kingjavip@gmail.com
  */
 public class ByteUtil {
+
+
     public static byte[] hexStrToByte(String hex) {
-        int len = (hex.length() / 2);
-        byte[] result = new byte[len];
-        char[] achar = hex.toCharArray();
-        for (int i = 0; i < len; i++) {
-            int pos = i * 2;
-            result[i] = (byte) (toByte(achar[pos]) << 4 | toByte(achar[pos + 1]));
+        int l = hex.length() / 2;
+        byte[] ret = new byte[l];
+        for (int i = 0; i < l; i++) {
+            ret[i] = (byte) Integer
+                    .valueOf(hex.substring(i * 2, i * 2 + 2), 16).byteValue();
         }
-        return result;
+        return ret;
     }
     private static byte toByte(char c) {
         byte b = (byte) "0123456789ABCDEF".indexOf(c);

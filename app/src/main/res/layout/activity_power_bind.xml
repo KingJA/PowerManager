@@ -13,6 +13,7 @@
         android:layout_height="match_parent">
 
     <LinearLayout
+        android:gravity="center_vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -27,17 +28,22 @@
             android:text="电池组总电压" />
 
         <TextView
+            android:drawableRight="@drawable/arrow_right"
+            android:textColorHint="@color/font_9"
+            android:gravity="center"
+            android:id="@+id/tv_totlePower"
             style="@style/font_9_15"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_weight="2"
-            android:hint="例如" />
+            android:hint="请选择" />
     </LinearLayout>
 
     <View style="@style/divider_nomal_horizontal" />
 
     <LinearLayout
+        android:gravity="center_vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -52,17 +58,22 @@
             android:text="电池组数" />
 
         <TextView
+            android:drawableRight="@drawable/arrow_right"
+            android:gravity="center"
+            android:textColorHint="@color/font_9"
+            android:id="@+id/tv_powerCount"
             style="@style/font_9_15"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_weight="2"
-            android:hint="例如" />
+            android:hint="请选择" />
     </LinearLayout>
 
     <View style="@style/divider_nomal_horizontal" />
 
     <LinearLayout
+        android:gravity="center_vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -77,17 +88,22 @@
             android:text="充电器充电电流" />
 
         <TextView
+            android:drawableRight="@drawable/arrow_right"
+            android:textColorHint="@color/font_9"
+            android:gravity="center"
+            android:id="@+id/tv_chargerElectricity"
             style="@style/font_9_15"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_weight="2"
-            android:hint="例如" />
+            android:hint="请选择" />
     </LinearLayout>
 
     <View style="@style/divider_nomal_horizontal" />
 
     <LinearLayout
+        android:gravity="center_vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -102,17 +118,22 @@
             android:text="电动车续航里程" />
 
         <TextView
+            android:drawableRight="@drawable/arrow_right"
+            android:textColorHint="@color/font_9"
+            android:gravity="center"
+            android:id="@+id/tv_mileage"
             style="@style/font_9_15"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_weight="2"
-            android:hint="例如" />
+            android:hint="请选择" />
     </LinearLayout>
 
     <View style="@style/divider_nomal_horizontal" />
 
     <LinearLayout
+        android:gravity="center_vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -127,12 +148,16 @@
             android:text="安装日期" />
 
         <TextView
+            android:drawableRight="@drawable/arrow_right"
+            android:textColorHint="@color/font_9"
+            android:gravity="center"
+            android:id="@+id/tv_date"
             style="@style/font_9_15"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_weight="2"
-            android:hint="例如" />
+            android:hint="请选择" />
     </LinearLayout>
 
     <View style="@style/divider_nomal_horizontal" />

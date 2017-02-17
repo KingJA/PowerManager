@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.kingja.power.greenbean.Battery;
 import com.kingja.power.greenbean.BleInfo;
+import com.kingja.power.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,6 +134,16 @@ public class DBManager {
         BatteryDao batteryDao = getBatteryDao();
         List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(macAddress)).list();
         return list;
+    }
+
+    public String getDeviceId(String macAddress) {
+       String deviceId="";
+        BatteryDao batteryDao = getBatteryDao();
+        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(macAddress),BatteryDao.Properties.DeviceType.eq(Constants.DEVICE_TYPE_MAIN)).list();
+        if (list.size() > 0) {
+            deviceId=list.get(0).getDeviceId();
+        }
+        return deviceId;
     }
 
     public boolean hasBinded(String deviceId) {

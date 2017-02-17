@@ -29,6 +29,8 @@ import com.kingja.power.convert.HeartConvert;
 import com.kingja.power.dao.DBManager;
 import com.kingja.power.greenbean.Battery;
 import com.kingja.power.util.ByteUtil;
+import com.kingja.power.util.Constants;
+import com.kingja.power.util.Crc16Util;
 import com.kingja.power.util.DataManager;
 import com.kingja.power.util.DialogUtil;
 import com.kingja.power.util.GoUtil;
@@ -103,12 +105,26 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
                             }
                         }
                     });
-                    mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(),
-                            new byte[]{(byte) 0xaa, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, (byte) 0xC3});
+                    sendHeart();
+
                     break;
             }
         }
     };
+
+    private void sendHeart() {
+        String content=Constants.ORDER_HEART+Crc16Util.fixHex(Integer.toHexString(Integer.valueOf(DataManager.getDeviceId())),8)
+               +"000000000000000000000000";
+        String crc16Code = Crc16Util.getCrc16Code(content);
+        String sendMsg=Constants.FLAG+content+crc16Code;
+        Log.e(TAG, "crc16Code: "+crc16Code );
+        Log.e(TAG, "sendMsg: "+sendMsg );
+        byte[] sendBytes = ByteUtil.hexStrToByte(sendMsg);
+        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(),sendBytes);
+//        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(),
+//                new byte[]{(byte) 0xaa, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, (byte) 0xC3});
+    }
+
     private TextView mTvAddBattery;
     private NormalDialog bindDialog;
     private BatteryAdapter mBatteryAdapter;
@@ -127,9 +143,7 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
     @Override
     protected void initVariables() {
         doBindService();
-        deviceId = getIntent().getStringExtra("deviceId");
         mBatteryList = DBManager.getInstance(this).getBindedBatteries(DataManager.getMacAddress());
-        Log.e(TAG, "deviceId: " + deviceId);
     }
 
     @Override
@@ -238,6 +252,7 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
                 byte[] value = characteristic.getValue();
                 dateHex = ByteUtil.byte2hex(value).substring(4);
                 if ("01".equals(getOrderCode(ByteUtil.byte2hex(value)))) {
+                    Log.e(TAG, "展示信息: "+dateHex );
                     mTvVoltage.setText(HeartConvert.getVoltage(dateHex) + "V");
                     mTvKilometre.setText(HeartConvert.getKilometre(dateHex) + "公里");
                     mTvTemperature.setText(HeartConvert.getTemperature(dateHex) + "℃");
@@ -273,12 +288,6 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
         }
     }
 
-    public static void goActivity(Activity activity, String deviceId) {
-        Intent intent = new Intent(activity, PowerDisplayActivity.class);
-        intent.putExtra("deviceId", deviceId);
-        activity.startActivity(intent);
-        activity.finish();
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

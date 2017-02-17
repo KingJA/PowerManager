@@ -20,6 +20,7 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -40,6 +41,7 @@ import com.kingja.power.util.ByteUtil;
 import com.kingja.power.util.DataManager;
 import com.kingja.power.util.DialogUtil;
 import com.kingja.power.util.GoUtil;
+import com.kingja.power.util.SpUtils;
 import com.kingja.zbar.CaptureActivity;
 
 import java.util.ArrayList;
@@ -71,15 +73,15 @@ public class BleActivity extends BackTitleActivity {
     private CommonAdapter<Map<String, Object>> deviceAdapter;
     private ArrayAdapter<String> serviceAdapter;
     private List<Map<String, Object>> deviceList;
-    private String connDeviceName;
     private String connDeviceAddress;
     private boolean hasBinded;
-
+    private NormalDialog bindDialog;
     //Layout view
     private ListView lstv_devList;
-    //    private ListView lstv_showService;
     private final String SERVICE_UUID = "0000fff0-0000-1000-8000-00805f9b34fb";
-
+    private List<BluetoothGattService> gattServiceList;
+    private List<String> serviceList;
+    private List<String[]> characteristicList;
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -116,10 +118,7 @@ public class BleActivity extends BackTitleActivity {
             }
         }
     };
-    private String writeUUID;
-    private String readUUID;
-    private TextView tv_scan_code;
-    private NormalDialog bindDialog;
+
 
     @Override
     protected void initVariables() {
@@ -133,7 +132,6 @@ public class BleActivity extends BackTitleActivity {
     @Override
     protected void initContentView() {
         lstv_devList = (ListView) findViewById(R.id.lstv_devList);
-        tv_scan_code = (TextView) findViewById(R.id.tv_scan_code);
     }
 
     @Override
@@ -152,14 +150,7 @@ public class BleActivity extends BackTitleActivity {
         initAdapter();
         registerReceiver(bleReceiver, makeIntentFilter());
         doBindService();
-        tv_scan_code.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                GoUtil.goActivityForResult(BleActivity.this, CaptureActivity.class, SCAN_CODE);
-            }
-        });
     }
-
 
 
     @Override
@@ -233,7 +224,7 @@ public class BleActivity extends BackTitleActivity {
         deviceAdapter = new CommonAdapter<Map<String, Object>>(
                 this, R.layout.item_device, deviceList) {
             @Override
-            public void convert(ViewHolder holder, final Map<String, Object> deviceMap) {
+            public void convert(final ViewHolder holder, final Map<String, Object> deviceMap) {
                 final Object name = deviceMap.get("name") == null ? "未命名" : deviceMap.get("name");
                 holder.setText(R.id.txtv_name, name.toString());
                 holder.setText(R.id.txtv_address, deviceMap.get("address").toString());
@@ -246,31 +237,18 @@ public class BleActivity extends BackTitleActivity {
                 holder.getView(R.id.btn_connect).setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if ((boolean) deviceMap.get("isConnect")) {
-                            mBleService.disconnect();
-                            showDialog(getString(R.string.disconnecting));
-                            tv_scan_code.setVisibility(View.GONE);
+                        connDeviceAddress = (String) deviceMap.get("address");
+                        DataManager.putMacAddress(connDeviceAddress);
+                        String deviceId = DBManager.getInstance(BleActivity.this).getDeviceId(connDeviceAddress);
+                        Log.e(TAG, "deviceId: "+deviceId );
+                        if (hasBinded=!TextUtils.isEmpty(deviceId)) {
+                            //获取DeviceId并保存DeviceId到sp
+                           DataManager.putDeviceId(deviceId);
+                            mBleService.connect(connDeviceAddress);
                         } else {
-                            connDeviceAddress = (String) deviceMap.get("address");
-                            connDeviceName = (String) name;
-                            if (hasBinded = DBManager.getInstance(BleActivity.this).getBindedBattery(connDeviceAddress).size() > 0) {
-                                mBleService.connect(connDeviceAddress);
-                                showDialog(getString(R.string.connecting));
-//TODO
-                            } else {
-                                HashMap<String, Object> connDevMap = new HashMap<String, Object>();
-                                connDevMap.put("name", connDeviceName);
-                                connDevMap.put("address", connDeviceAddress);
-                                connDevMap.put("isConnect", false);
-                                deviceList.clear();
-                                deviceList.add(connDevMap);
-                                deviceAdapter.notifyDataSetChanged();
-                                mBleService.connect(connDeviceAddress);
-                                DataManager.putMacAddress(connDeviceAddress);
-                                showDialog(getString(R.string.connecting));
-                                tv_scan_code.setVisibility(View.VISIBLE);
-                            }
+                            mBleService.connect(connDeviceAddress);
                         }
+                        showDialog(getString(R.string.connecting));
                     }
                 });
             }
@@ -281,9 +259,7 @@ public class BleActivity extends BackTitleActivity {
         serviceAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, serviceList);
     }
 
-    private List<BluetoothGattService> gattServiceList;
-    private List<String> serviceList;
-    private List<String[]> characteristicList;
+
 
     private void setBleServiceListener() {
         mBleService.setOnServicesDiscoveredListener(new BleService.OnServicesDiscoveredListener() {
@@ -308,19 +284,18 @@ public class BleActivity extends BackTitleActivity {
         if (SERVICE_UUID.equals(serviceUuid)) {
             final List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
             mBleService.setCharacteristicNotification(characteristics.get(3), true);
-            writeUUID = characteristics.get(2).getUuid().toString();
-            readUUID = characteristics.get(3).getUuid().toString();
             DataManager.putServiceUUID(SERVICE_UUID);
-            DataManager.putReadUUID(readUUID);
-            DataManager.putWriteUUID(writeUUID);
+            DataManager.putReadUUID(characteristics.get(3).getUuid().toString());
+            DataManager.putWriteUUID(characteristics.get(2).getUuid().toString());
         }
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && data != null) {
             final String result = data.getStringExtra("result");
-             String deviceId = result.substring(4, 12);
+            String deviceId = result.substring(4, 12);
             bindDialog = DialogUtil.getDoubleDialog(this, "您是否要绑定编号为" + ByteUtil.hexStr2Dec(deviceId) + "的设备", "取消", "确定");
             bindDialog.setOnBtnClickL(new OnBtnClickL() {
                 @Override
@@ -351,7 +326,7 @@ public class BleActivity extends BackTitleActivity {
      */
     private void doUnBindService() {
         if (mIsBind) {
-            Log.e(TAG, "doUnBindService: " );
+            Log.e(TAG, "doUnBindService: ");
             unbindService(serviceConnection);
             mBleService = null;
             mIsBind = false;
@@ -373,11 +348,11 @@ public class BleActivity extends BackTitleActivity {
                 deviceAdapter.notifyDataSetChanged();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_CONNECTED)) {
                 Log.e(TAG, "ACTION_GATT_CONNECTED: ");
-                deviceList.get(0).put("isConnect", true);
-                deviceAdapter.notifyDataSetChanged();
                 dismissDialog();
                 if (hasBinded) {
-                    PowerDisplayActivity.goActivity(BleActivity.this,"00000001");
+                    GoUtil.goActivity(BleActivity.this,PowerDisplayActivity.class);
+                } else {
+                    GoUtil.goActivityForResult(BleActivity.this, CaptureActivity.class, SCAN_CODE);
                 }
 
             } else if (intent.getAction().equals(BleService.ACTION_GATT_DISCONNECTED)) {

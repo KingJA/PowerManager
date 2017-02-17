@@ -19,12 +19,4 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <TextView
-        android:visibility="gone"
-        style="@style/btn_nomal_blue"
-        android:id="@+id/tv_scan_code"
-        android:text="扫描二维码"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
 </LinearLayout>
