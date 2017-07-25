@@ -270,6 +270,7 @@ public class PowerBindActivity extends BackTitleActivity implements View.OnClick
                     case MILEAGE:
                         String mileage = item;
                         mTvMileage.setText(mileage + "公里");
+                        DataManager.putMileage(Integer.valueOf(mileage));
                         break;
                 }
             }

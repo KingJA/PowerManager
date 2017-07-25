@@ -27,15 +27,17 @@ public class PowerChildDisplayActivity extends BackTitleActivity {
     private String deviceId;
     private String produceTime;
     private String testTime;
+    private String power;
 
     @Override
     protected void initVariables() {
-        chargerStatus = getIntent().getStringExtra("chargerStatus");
-        healthStatus = getIntent().getStringExtra("healthStatus");
-        temperature = getIntent().getStringExtra("temperature");
-        deviceId = getIntent().getStringExtra("deviceId");
-        produceTime = getIntent().getStringExtra("produceTime");
-        testTime = getIntent().getStringExtra("testTime");
+//        chargerStatus = getIntent().getStringExtra("chargerStatus");
+//        healthStatus = getIntent().getStringExtra("healthStatus");
+//        temperature = getIntent().getStringExtra("temperature");
+//        deviceId = getIntent().getStringExtra("deviceId");
+//        produceTime = getIntent().getStringExtra("produceTime");
+//        testTime = getIntent().getStringExtra("testTime");
+//        power = getIntent().getStringExtra("power");
     }
 
     @Override
@@ -66,20 +68,30 @@ public class PowerChildDisplayActivity extends BackTitleActivity {
 
     @Override
     protected void initData() {
-        mTvChargerStatus.setText(chargerStatus);
-        mTvHealthStatus.setText(healthStatus);
-        mTvDeviceId.setText(deviceId);
-        mTvProduceTime.setText(produceTime);
-        mTvTestTime.setText(testTime);
-        mTvTemperature.setText(temperature);
+//        mTvCurrentPower.setText(power+"%");
+//        mTvChargerStatus.setText(chargerStatus);
+//        mTvHealthStatus.setText(healthStatus);
+//        mTvDeviceId.setText(deviceId);
+//        mTvProduceTime.setText(produceTime);
+//        mTvTestTime.setText(testTime);
+//        mTvTemperature.setText(temperature);
+
+        mTvCurrentPower.setText(75+"%");
+        mTvChargerStatus.setText("未充满");
+        mTvHealthStatus.setText("正常");
+        mTvDeviceId.setText("100256");
+        mTvProduceTime.setText("2017-07-20");
+        mTvTestTime.setText("2017-07-22");
+        mTvTemperature.setText("55");
     }
 
     @Override
     protected void setData() {
     }
 
-    public static void goActivity(Activity activity, String chargerStatus, String healthStatus, String temperature, String deviceId, String produceTime, String testTime) {
+    public static void goActivity(Activity activity, String power, String chargerStatus, String healthStatus, String temperature, String deviceId, String produceTime, String testTime) {
         Intent intent = new Intent(activity, PowerChildDisplayActivity.class);
+        intent.putExtra("power", power);
         intent.putExtra("chargerStatus", chargerStatus);
         intent.putExtra("healthStatus", healthStatus);
         intent.putExtra("temperature", temperature);

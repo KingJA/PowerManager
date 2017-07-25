@@ -1,6 +1,5 @@
 package com.kingja.power.activity;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
@@ -26,6 +25,7 @@ import com.kingja.power.R;
 import com.kingja.power.adapter.BatteryAdapter;
 import com.kingja.power.base.BackTitleActivity;
 import com.kingja.power.convert.HeartConvert;
+import com.kingja.power.dao.CheckDeviceEvent;
 import com.kingja.power.dao.DBManager;
 import com.kingja.power.greenbean.Battery;
 import com.kingja.power.util.ByteUtil;
@@ -37,6 +37,10 @@ import com.kingja.power.util.GoUtil;
 import com.kingja.power.util.TimeUtil;
 import com.kingja.power.util.ToastUtil;
 import com.kingja.zbar.CaptureActivity;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,16 +115,17 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
             }
         }
     };
+    private String power;
 
     private void sendHeart() {
-        String content=Constants.ORDER_HEART+Crc16Util.fixHex(Integer.toHexString(Integer.valueOf(DataManager.getDeviceId())),8)
-               +"000000000000000000000000";
+        String content = Constants.ORDER_HEART + Crc16Util.fixHex(Integer.toHexString(Integer.valueOf(DataManager.getDeviceId())), 8)
+                + "000000000000000000000000";
         String crc16Code = Crc16Util.getCrc16Code(content);
-        String sendMsg=Constants.FLAG+content+crc16Code;
-        Log.e(TAG, "crc16Code: "+crc16Code );
-        Log.e(TAG, "sendMsg: "+sendMsg );
+        String sendMsg = Constants.FLAG + content + crc16Code;
+        Log.e(TAG, "crc16Code: " + crc16Code);
+        Log.e(TAG, "sendMsg: " + sendMsg);
         byte[] sendBytes = ByteUtil.hexStrToByte(sendMsg);
-        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(),sendBytes);
+        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(), sendBytes);
 //        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(),
 //                new byte[]{(byte) 0xaa, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, (byte) 0xC3});
     }
@@ -142,6 +147,7 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
 
     @Override
     protected void initVariables() {
+//        EventBus.getDefault().register(this);
         doBindService();
         mBatteryList = DBManager.getInstance(this).getBindedBatteries(DataManager.getMacAddress());
     }
@@ -185,8 +191,11 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
         mLv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
-
-                unbindDialog = DialogUtil.getDoubleDialog(PowerDisplayActivity.this, "您是否要解绑编号为" + ByteUtil.hexStr2Dec(deviceId) + "的子电池", "取消", "确定");
+                if (position == 0) {
+                    return true;
+                }
+                final Battery battery = (Battery) parent.getItemAtPosition(position);
+                unbindDialog = DialogUtil.getDoubleDialog(PowerDisplayActivity.this, "您是否要解绑编号为" + battery.getDeviceId() + "的子电池", "取消", "确定");
                 unbindDialog.setOnBtnClickL(new OnBtnClickL() {
                     @Override
                     public void onBtnClick() {
@@ -196,7 +205,7 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
                     @Override
                     public void onBtnClick() {
                         unbindDialog.dismiss();
-                        Battery battery = (Battery) parent.getItemAtPosition(position);
+//                        Battery battery = (Battery) parent.getItemAtPosition(position);
                         DBManager.getInstance(PowerDisplayActivity.this).deleteBattery(battery.getId());
                         mBatteryList = DBManager.getInstance(PowerDisplayActivity.this).getBindedBatteries(DataManager.getMacAddress());
                         mBatteryAdapter.setData(mBatteryList);
@@ -209,9 +218,13 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
         mLv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    return ;
+                }
                 Battery battery = (Battery) parent.getItemAtPosition(position);
-                PowerChildDisplayActivity.goActivity(PowerDisplayActivity.this,HeartConvert.getPowerStatus(dateHex),"--",HeartConvert.getTemperature(dateHex) + "℃",
-                        battery.getDeviceId(),battery.getProduceTime(),battery.getCreateTime());
+//                PowerChildDisplayActivity.goActivity(PowerDisplayActivity.this,power, HeartConvert.getPowerStatus(dateHex), "--", HeartConvert.getTemperature(dateHex) + "℃",
+//                        battery.getDeviceId(), battery.getProduceTime(), battery.getCreateTime());
+                GoUtil.goActivity(PowerDisplayActivity.this,PowerChildDisplayActivity.class);
             }
         });
     }
@@ -252,9 +265,12 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
                 byte[] value = characteristic.getValue();
                 dateHex = ByteUtil.byte2hex(value).substring(4);
                 if ("01".equals(getOrderCode(ByteUtil.byte2hex(value)))) {
-                    Log.e(TAG, "展示信息: "+dateHex );
+                    Log.e(TAG, "展示信息: " + dateHex);
+                    power = HeartConvert.getKilometre(dateHex);
+                    mProgressCircle.setProgress(Integer.valueOf(power));
+                    int mileage = (int) ((Integer.valueOf(HeartConvert.getKilometre(dateHex))* DataManager.getMileage())*0.01f);
                     mTvVoltage.setText(HeartConvert.getVoltage(dateHex) + "V");
-                    mTvKilometre.setText(HeartConvert.getKilometre(dateHex) + "公里");
+                    mTvKilometre.setText(mileage + "公里");
                     mTvTemperature.setText(HeartConvert.getTemperature(dateHex) + "℃");
                     mTvChargerStatus.setText(HeartConvert.getPowerStatus(dateHex));
 //                    mProgressCircle.setProgress();
@@ -293,14 +309,15 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && data != null) {
-            final String result = data.getStringExtra("result");
-            String deviceId = result.substring(4, 12);
+            final String result =  data.getStringExtra("result");
+            final String deviceTypeHex = result.substring(0, 4);
+            final String deviceIdHex = result.substring(4, 12);
 
             if (DBManager.getInstance(PowerDisplayActivity.this).hasBinded(ByteUtil.hexStr2Dec(result.substring(4, 12)) + "")) { //TODO 1.如果已经绑定则提示已经绑定，如果没有则进行绑定
                 ToastUtil.showToast("该设备已经绑定");
-            }else{
+            } else {
 
-                bindDialog = DialogUtil.getDoubleDialog(this, "您是否要绑定编号为" + ByteUtil.hexStr2Dec(deviceId) + "的子电池", "取消", "确定");
+                bindDialog = DialogUtil.getDoubleDialog(this, "您是否要绑定编号为" + ByteUtil.hexStr2Dec(deviceIdHex) + "的子电池", "取消", "确定");
                 bindDialog.setOnBtnClickL(new OnBtnClickL() {
                     @Override
                     public void onBtnClick() {
@@ -313,6 +330,7 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
                         saveData2Local(result);
                         mBatteryList = DBManager.getInstance(PowerDisplayActivity.this).getBindedBatteries(DataManager.getMacAddress());
                         mBatteryAdapter.setData(mBatteryList);
+                        sendChildDevice(deviceTypeHex,deviceIdHex,mBatteryAdapter.getCount()-1);
 
                     }
                 });
@@ -352,4 +370,24 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
             lastTime = currentTime;
         }
     }
+
+    private void sendChildDevice(String deviceTypeHex, String deviceHexId,int number) {
+        String content = Constants.ORDER_OD + deviceTypeHex+deviceHexId+"0"+number
+                + "000000000000000000";
+        String crc16Code = Crc16Util.getCrc16Code(content);
+        String sendMsg = Constants.FLAG + content + crc16Code;
+        Log.e(TAG, "crc16Code: " + crc16Code);
+        Log.e(TAG, "sendMsg: " + sendMsg);
+        byte[] sendBytes = ByteUtil.hexStrToByte(sendMsg);
+        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(), sendBytes);
+    }
+
+//    @Subscribe(threadMode = ThreadMode.MAIN)
+//    public void onCheckDeviceEvent(CheckDeviceEvent event) {
+//        if (event.isChecked()) {
+//
+//        }else{
+//            ToastUtil.showToast("不是配对的标签");
+//        }
+//    }
 }

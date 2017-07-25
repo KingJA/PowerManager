@@ -1,0 +1,12 @@
+ext {
+    compileSdkVersion = 25
+    buildToolsVersion = "25.0.3"
+    minSdkVersion = 17
+    targetSdkVersion = 22
+
+    versionCode = 1
+    versionName = "1.0.0"
+    appName = "物联网防控"
+
+    supportVersion = '25.3.1'
+}

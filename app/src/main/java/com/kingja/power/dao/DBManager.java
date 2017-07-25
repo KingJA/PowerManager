@@ -104,7 +104,8 @@ public class DBManager {
     public BleInfo getLastBleInfo(String order) {
         BleInfo bleInfo = new BleInfo();
         BleInfoDao bleInfoDao = getBleInfoDao();
-        List<BleInfo> list = bleInfoDao.queryBuilder().where(BleInfoDao.Properties.Order.eq(order)).orderDesc(BleInfoDao.Properties.Id).limit(1).list();
+        List<BleInfo> list = bleInfoDao.queryBuilder().where(BleInfoDao.Properties.Order.eq(order)).orderDesc
+                (BleInfoDao.Properties.Id).limit(1).list();
         if (list.size() > 0) {
             bleInfo = list.get(0);
         }
@@ -118,7 +119,8 @@ public class DBManager {
      */
     public List<Battery> getBindedBatteries(String mac) {
         BatteryDao batteryDao = getBatteryDao();
-        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(mac)).orderAsc(BatteryDao.Properties.DeviceType).list();
+        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(mac)).orderAsc(BatteryDao
+                .Properties.DeviceType).list();
         return list;
     }
 
@@ -137,11 +139,12 @@ public class DBManager {
     }
 
     public String getDeviceId(String macAddress) {
-       String deviceId="";
+        String deviceId = "";
         BatteryDao batteryDao = getBatteryDao();
-        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(macAddress),BatteryDao.Properties.DeviceType.eq(Constants.DEVICE_TYPE_MAIN)).list();
+        List<Battery> list = batteryDao.queryBuilder().where(BatteryDao.Properties.Mac.eq(macAddress), BatteryDao
+                .Properties.DeviceType.eq(Constants.DEVICE_TYPE_MAIN)).list();
         if (list.size() > 0) {
-            deviceId=list.get(0).getDeviceId();
+            deviceId = list.get(0).getDeviceId();
         }
         return deviceId;
     }

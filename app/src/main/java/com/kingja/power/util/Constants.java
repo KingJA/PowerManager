@@ -12,4 +12,5 @@ public class Constants {
     public static final String DEVICE_TYPE_OTHER="2";
     public static final String FLAG="aa";
     public static final String ORDER_HEART="0b";
+    public static final String ORDER_OD="0d";
 }

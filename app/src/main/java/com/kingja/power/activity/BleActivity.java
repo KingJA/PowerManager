@@ -147,6 +147,7 @@ public class BleActivity extends BackTitleActivity {
 
     @Override
     protected void initData() {
+        setBackButtonGone();
         initAdapter();
         registerReceiver(bleReceiver, makeIntentFilter());
         doBindService();
@@ -296,7 +297,7 @@ public class BleActivity extends BackTitleActivity {
         if (resultCode == RESULT_OK && data != null) {
             final String result = data.getStringExtra("result");
             String deviceId = result.substring(4, 12);
-            bindDialog = DialogUtil.getDoubleDialog(this, "您是否要绑定编号为" + ByteUtil.hexStr2Dec(deviceId) + "的设备", "取消", "确定");
+            bindDialog = DialogUtil.getDoubleDialog(this,String.format( getString(R.string.bind_dialog_msg),ByteUtil.hexStr2Dec(deviceId)), getString(R.string.cancle),getString(R.string.confirm));
             bindDialog.setOnBtnClickL(new OnBtnClickL() {
                 @Override
                 public void onBtnClick() {
@@ -350,7 +351,7 @@ public class BleActivity extends BackTitleActivity {
                 Log.e(TAG, "ACTION_GATT_CONNECTED: ");
                 dismissDialog();
                 if (hasBinded) {
-                    GoUtil.goActivity(BleActivity.this,PowerDisplayActivity.class);
+                    GoUtil.goActivityAndFinish(BleActivity.this,PowerDisplayActivity.class);
                 } else {
                     GoUtil.goActivityForResult(BleActivity.this, CaptureActivity.class, SCAN_CODE);
                 }
@@ -401,6 +402,7 @@ public class BleActivity extends BackTitleActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        dismissDialog();
         doUnBindService();
         unregisterReceiver(bleReceiver);
     }

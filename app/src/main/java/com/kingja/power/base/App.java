@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.kingja.power.util.Constants;
+import com.kingja.power.util.CrashHandler;
 
 public class App extends Application {
     private static Context mAppContext;
@@ -16,6 +17,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        CrashHandler.getInstance().init(this);
         mAppContext = getApplicationContext();
         mSharedPreferences = getSharedPreferences(Constants.APPLICATION_NAME,
                 MODE_PRIVATE);

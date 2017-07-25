@@ -8,4 +8,7 @@
     <string name="connecting">连接中...</string>
     <string name="disconnecting">正在断开...</string>
     <string name="dev_conn_number">设备连接数量：</string>
+    <string name="bind_dialog_msg">您是否要绑定编号为%d的设备</string>
+    <string name="cancle">取消</string>
+    <string name="confirm">确定</string>
 </resources>

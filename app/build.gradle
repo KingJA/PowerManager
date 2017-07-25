@@ -38,4 +38,5 @@ dependencies {
     compile project(':blelib')
     compile project(':zbar')
     compile project(':libk-progress')
+    compile 'org.greenrobot:eventbus:3.0.0'
 }

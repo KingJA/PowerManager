@@ -4,6 +4,8 @@ import android.util.Log;
 
 import com.kingja.power.util.ByteUtil;
 
+import java.text.DecimalFormat;
+
 /**
  * Description：TODO
  * Create Time：2017/2/15 10:29
@@ -56,14 +58,16 @@ public class HeartConvert {
     }
 
     //电压(6Byte)
+
     public static String getVoltage(String hexStr) {
         int sum = 0;
-        for (int i = 0; i < 6; i ++) {
-            int v = ByteUtil.hexStr2Dec(hexStr.substring(4 + i, 6 + i));
-            Log.e("电压", "电压 " + i + " : " + v);
+        for (int i=0; i < 6; i ++) {
+            int v = ByteUtil.hexStr2Dec(hexStr.substring(4 + 2*i, 6 + 2*i));
+            System.out.println("子电压 " + i + " : " + v);
             sum += v;
         }
-        return sum + "";
+        System.out.println("总电压  : " + (new DecimalFormat("0.0").format((float)sum/10)));
+        return new DecimalFormat("0.0").format((float)sum/10);
     }
 
     //平均温度(1Byte)

@@ -12,6 +12,7 @@ public class DataManager {
     private static final String WRITE_UUID = "WRITE_UUID";
     private static final String READ_UUID = "READ_UUID";
     private static final String DEVICE_ID = "DEVICE_ID";
+    private static final String MILEAGE = "MILEAGE";
     private static final String EMPTY = "";
 
     /*================================GET================================*/
@@ -35,6 +36,10 @@ public class DataManager {
         return (String) SpUtils.get(DEVICE_ID, EMPTY);
     }
 
+    public static int getMileage() {
+        return (Integer) SpUtils.get(MILEAGE, 100);
+    }
+
 
     /*================================PUT================================*/
 
@@ -56,6 +61,10 @@ public class DataManager {
 
     public static void putDeviceId(String data) {
         SpUtils.put(DEVICE_ID, data);
+    }
+
+    public static void putMileage(int mileage) {
+        SpUtils.put(MILEAGE, mileage);
     }
 
 
