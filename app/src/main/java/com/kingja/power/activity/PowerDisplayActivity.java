@@ -125,7 +125,8 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
         Log.e(TAG, "crc16Code: " + crc16Code);
         Log.e(TAG, "sendMsg: " + sendMsg);
         byte[] sendBytes = ByteUtil.hexStrToByte(sendMsg);
-        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(), sendBytes);
+        //// TODO: 2017/7/25 暂停发送心跳
+//        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(), sendBytes);
 //        mBleService.writeCharacteristic(DataManager.getServiceUUID(), DataManager.getWriteUUID(),
 //                new byte[]{(byte) 0xaa, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, (byte) 0xC3});
     }
@@ -330,7 +331,8 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
                         saveData2Local(result);
                         mBatteryList = DBManager.getInstance(PowerDisplayActivity.this).getBindedBatteries(DataManager.getMacAddress());
                         mBatteryAdapter.setData(mBatteryList);
-                        sendChildDevice(deviceTypeHex,deviceIdHex,mBatteryAdapter.getCount()-1);
+                        //// TODO: 2017/7/25 暂定发送子标签心跳
+//                        sendChildDevice(deviceTypeHex,deviceIdHex,mBatteryAdapter.getCount()-1);
 
                     }
                 });
@@ -365,6 +367,7 @@ public class PowerDisplayActivity extends BackTitleActivity implements BleListen
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastTime < 500) {
             finish();
+            android.os.Process.killProcess(android.os.Process.myPid());
         } else {
             ToastUtil.showToast("连续点击两次退出");
             lastTime = currentTime;
